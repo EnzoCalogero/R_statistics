@@ -1,0 +1,122 @@
+---
+title: "Exploring the BRFSS data"
+output: 
+  html_document: 
+    fig_height: 4
+    highlight: pygments
+    theme: spacelab
+---
+
+## Setup
+
+### Load packages
+
+```{r load-packages, message = FALSE}
+library(ggplot2)
+library(dplyr)
+```
+
+### Load data
+
+Make sure your data and R Markdown files are in the same directory. When loaded
+your data file will be called `brfss2013`. Delete this note when before you submit 
+your work. 
+
+```{r load-data}
+load("brfss2013.RData")
+```
+
+
+
+* * *
+
+## Part 1: Data
+The data is collect following a random model 'Simple random sampling'.
+Following this kind of data collection, different that experiment, Only association an d correlations can be investigate.
+No casuality can be investigate.
+
+Besides, some bias can be present on the data, since people was contacted on the phone (lanline or mobile) and they hav eto be williong to perform teh survey, and they need to be available when the the phone is done.
+
+
+* * *
+
+## Part 2: Research questions
+All teh research questions are focus of analyse if people with an higher income are more incline to have a 
+healthier life stile.
+
+**Research quesion 1:**
+
+Do the person with an higher income are less incline to smoke?
+do the sex of the person have a different pattern?
+
+**Research quesion 2:**
+
+Do the person with an higher income are more incline to perform more often physical exercise?
+do the sex of the person have a different pattern?
+
+**Research quesion 3:**
+
+Do the person with an higher income are less incline to drink sugary drinking?
+do the sex of the person have a different pattern?
+
+* * *
+
+## Part 3: Exploratory data analysis
+
+The dataset is composed of the 330 variables, but report is focused of the five variables:
+income2  --> Ordinal categorical variable that represents the income
+smokday2 --> Ordinal categorical variable that represents if and in case how often the person is smoking
+pa1min_--> integer variabl ethat indicate on average how many muinutes are dedicated in total to physical execsise.
+ssbsugar -->
+and sex --> a boolean variable, that indicate the sex of the person.
+
+```{r}
+brfss2013 %>% 
+  select(income2,smokday2,pa1min_,ssbsugar,sex) %>% 
+  str()
+
+```
+**Research quesion 1:**
+Association with income versus smoking.
+
+
+```{r,fig.height=7,fig.width=10}
+brfss2013 <- brfss2013 %>% 
+  filter(!(is.na(smokday2))) %>%
+  mutate(smoking = ifelse(smokday2 == 'Not at all', TRUE, FALSE))
+
+plot(brfss2013$income2,brfss2013$smokday2)
+title(main = "Relation Between Smoking and Income", xlab="Income increasing -->", ylab = "Smoking Frequency")
+
+mytable <- xtabs(~income2+smokday2, data=brfss2013)
+prop.table(mytable, 2)
+```
+From the chart we can see that as the income is increasing the percentage of smoking people is reducing.
+From the summary the percentage of not smoking people is only 0.419 for people earning less than 10,000$, and this percentage increase to 0.773 for people earning more than 75,000
+
+***
+The second part of teh research is related on identify if teh sex hasv a different pattern:
+
+
+
+
+**Research quesion 2:**
+
+Do the person with an higher income are more incline to perform more often physical exercise?
+
+```{r}
+plot(brfss2013$income2,log(brfss2013$pa1min_+1))
+```
+The charts represents the box plot of the log of the number of minutes spend on average on a week for physical exercise.
+
+```{r}
+plot(brfss2013$income2,log(brfss2013$pa1min_+1))
+```
+
+
+**Research quesion 3:**
+
+```{r}
+
+```
+
