@@ -18,46 +18,43 @@ library(dplyr)
 
 ### Load data
 
-Make sure your data and R Markdown files are in the same directory. When loaded
-your data file will be called `brfss2013`. Delete this note when before you submit 
-your work. 
-
 ```{r load-data}
 load("brfss2013.RData")
 ```
 
-
-
 * * *
 
 ## Part 1: Data
-The data is collect following a random model 'Simple random sampling'.
-Following this kind of data collection, different that experiment, Only association an d correlations can be investigate.
+
+The data used for this report is collect following a random model 'Simple random sampling'.
+
+This data collection is different from a more consistent experiment data collections.
+
+With the information collected with this model, only association and correlations can be investigate.
 No casuality can be investigate.
 
-Besides, some bias can be present on the data, since people was contacted on the phone (lanline or mobile) and they hav eto be williong to perform teh survey, and they need to be available when the the phone is done.
-
+In additions, some bias can be present, since the persons  were contacted on the phone (lanline or mobile) and they have to be willing and available when the the contated by phone.
 
 * * *
 
 ## Part 2: Research questions
-All teh research questions are focus of analyse if people with an higher income are more incline to have a 
+
+The research questions are focus of analyse whether people with an higher income are more incline to have a 
 healthier life stile.
 
 **Research quesion 1:**
 
 Do the person with an higher income are less incline to smoke?
-do the sex of the person have a different pattern?
+do person of a different sex have a different pattern?
 
 **Research quesion 2:**
 
-Do the person with an higher income are more incline to perform more often physical exercise?
+Do the person with an higher income are more incline to perform physical exercise?
 do the sex of the person have a different pattern?
 
 **Research quesion 3:**
 
 Do the person with an higher income are less incline to drink sugary drinking?
-do the sex of the person have a different pattern?
 
 * * *
 
@@ -67,7 +64,7 @@ The dataset is composed of the 330 variables, but report is focused of the five 
 income2  --> Ordinal categorical variable that represents the income
 smokday2 --> Ordinal categorical variable that represents if and in case how often the person is smoking
 pa1min_--> integer variabl ethat indicate on average how many muinutes are dedicated in total to physical execsise.
-ssbsugar -->
+ssbsugar --> a composed variabe that indicate the frequency that the person drinks sugary drinkings. 
 and sex --> a boolean variable, that indicate the sex of the person.
 
 ```{r}
@@ -76,11 +73,12 @@ brfss2013 %>%
   str()
 
 ```
+
 **Research quesion 1:**
-Association with income versus smoking.
 
+Association income versus smoking.
 
-```{r,fig.height=7,fig.width=10}
+```{r,fig.height=6,fig.width=8}
 brfss2013 <- brfss2013 %>% 
   filter(!(is.na(smokday2))) %>%
   mutate(smoking = ifelse(smokday2 == 'Not at all', TRUE, FALSE))
@@ -91,32 +89,89 @@ title(main = "Relation Between Smoking and Income", xlab="Income increasing -->"
 mytable <- xtabs(~income2+smokday2, data=brfss2013)
 prop.table(mytable, 2)
 ```
-From the chart we can see that as the income is increasing the percentage of smoking people is reducing.
-From the summary the percentage of not smoking people is only 0.419 for people earning less than 10,000$, and this percentage increase to 0.773 for people earning more than 75,000
+
+From the chart we can see that as the income is increasing the percentage of smoking people is reduced.
+From the summary the percentage of not smoking people is only 0.419 for people earning less than 10,000$, and this percentage increase to 0.773 for people earning more than 75,000.
 
 ***
-The second part of teh research is related on identify if teh sex hasv a different pattern:
+The second part of the research is related on identify if the sex has a different pattern:
 
+```{r}
+female<-brfss2013%>% filter(sex=='Female') 
 
+plot(female$income2,female$smokday2)
+title(main = "Relation Between Smoking and Income considering only the Female", xlab="Income increasing -->", ylab = "Smoking Frequency")
+```
 
+looking a the summary table for the female only, the trend is identical. 
+But it appear that the percentage of females smoking is bigger than the males.
+
+```{r}
+mytable <- xtabs(~income2+smokday2, data=female)
+prop.table(mytable, 2)
+```
 
 **Research quesion 2:**
 
 Do the person with an higher income are more incline to perform more often physical exercise?
 
 ```{r}
-plot(brfss2013$income2,log(brfss2013$pa1min_+1))
+boxplot(log(brfss2013$pa1min_+1)~income2,data=brfss2013, main="Relation Between Quantity of physical exercise  and Income",
+   xlab="Income increasing -->", ylab="Quantity of Physical Exercise") 
+
 ```
+
 The charts represents the box plot of the log of the number of minutes spend on average on a week for physical exercise.
 
+From the chart we can see that no trend is present.
+
 ```{r}
-plot(brfss2013$income2,log(brfss2013$pa1min_+1))
+brfss2013 %>% 
+  filter(!(is.na(pa1min_))) %>%
+  filter(!(is.na(income2))) %>%
+  group_by(income2) %>%
+  summarise(Activity_mean = mean(pa1min_), Activity_median = median(pa1min_), Activity_sd = sd(pa1min_) )
 ```
 
+Similar from the summary, we can not identify any trend. 
+The lack of any trend is present even on the sumary filtred for the Female.
+
+```{r}
+female %>% 
+  filter(!(is.na(pa1min_))) %>%
+  filter(!(is.na(income2))) %>%
+  group_by(income2) %>%
+  summarise(Activity_mean = mean(pa1min_), Activity_median = median(pa1min_), Activity_sd = sd(pa1min_))
+```
 
 **Research quesion 3:**
 
+Do the person with an higher income are less incline to dring sugary bevarage?
+For this question, the variabels ssbugar and income2 are considerated.
+
+The variable ssbsugar needs to be  transformed in an usable format.
+The variable is a standard format that rapresent the frequency per week.  
+
 ```{r}
+temp<- brfss2013 %>% 
+   select(income2,ssbsugar,sex) %>% filter(!(is.na(income2))) %>% filter(!(is.na(ssbsugar)))
+
+temp2<-temp %>% filter(ssbsugar<500)%>%mutate(sugar=case_when(ssbsugar==0 ~0,(ssbsugar<200 & ssbsugar>0)~(ssbsugar-100)*30,(ssbsugar>200 & ssbsugar<300)~(ssbsugar-200)*4.5,ssbsugar>300~(ssbsugar-300)))
 
 ```
 
+```{r}
+
+plot(temp2$income2,log(temp2$sugar+1))
+title(main = "Relation Between Sugary Bevarage and Income", xlab="Income increasing -->", ylab = "Sugary Bevarage per Week (log)")
+ 
+```
+
+From the Charts can be confirmed that the amount of sugary drinkings is reduced with the increase of the income.
+This information is confirmed even with the summary table reported below.
+
+```{r}
+temp2 %>% 
+    group_by(income2) %>%
+  summarise(Sugar_mean = mean(sugar), Sugar_median = median(sugar), Sugar_sd = sd(sugar) )
+```
